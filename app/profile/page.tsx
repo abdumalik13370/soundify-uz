@@ -3,17 +3,13 @@
 import { useState, useRef, ChangeEvent, useEffect } from "react";
 import Link from "next/link";
 
-// ⚠️ BU YERGA SUPABASE MA'LUMOTLARINGIZNI QO'YING
-const SUPABASE_URL = "https://wdawvyidjcpadbajkjoz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkYXd2eWlkamNwYWRiYWpram96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjgwNzEsImV4cCI6MjA5NjYwNDA3MX0.DeYPZAvdIZ8kP0_U_ab-T-cjrpIxBVMZGRrY3F6Wxtk";
-
 export default function Profile() {
   const [name, setName] = useState("Alisher");
   const [surname, setSurname] = useState("Xodjayev");
   const [phone, setPhone] = useState("+998 90 123 45 67");
   const [avatar, setAvatar] = useState<string>(""); 
-  const [userId, setUserId] = useState("");
   
+  // Верификация (Галочка) и состояния времени
   const [isVerified, setIsVerified] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [promoCode, setPromoCode] = useState("");
@@ -24,15 +20,8 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Проверка хранилища и истечения времени
   useEffect(() => {
-    // Har bir qurilmaga unikal ID berish (baza uchun)
-    let id = localStorage.getItem("profile_user_id");
-    if (!id) {
-      id = "user_" + Math.random().toString(36).substring(2, 11);
-      localStorage.setItem("profile_user_id", id);
-    }
-    setUserId(id);
-
     const savedName = localStorage.getItem("profile_name");
     const savedSurname = localStorage.getItem("profile_surname");
     const savedPhone = localStorage.getItem("profile_phone");
@@ -48,6 +37,7 @@ export default function Profile() {
     if (savedAvatar) setAvatar(savedAvatar);
     if (savedLocked === "true") setIsPhoneLocked(true);
 
+    // Проверка временной верификации
     const checkVerification = () => {
       const savedVerified = localStorage.getItem("profile_verified");
       const savedExpires = localStorage.getItem("profile_verified_expires");
@@ -58,11 +48,14 @@ export default function Profile() {
 
         if (now < expirationTime) {
           setIsVerified(true);
+          
+          // Расчет оставшегося времени (в часах и минутах)
           const diff = expirationTime - now;
           const hours = Math.floor(diff / (1000 * 60 * 60));
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           setTimeLeft(`Осталось: ${hours}ч ${minutes}м`);
         } else {
+          // Если время истекло, удаляем из памяти
           localStorage.removeItem("profile_verified");
           localStorage.removeItem("profile_verified_expires");
           setIsVerified(false);
@@ -72,7 +65,7 @@ export default function Profile() {
     };
 
     checkVerification();
-    const interval = setInterval(checkVerification, 60000); 
+    const interval = setInterval(checkVerification, 60000); // Проверяет каждую минуту
     return () => clearInterval(interval);
   }, []);
 
@@ -89,10 +82,9 @@ export default function Profile() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     let updatedPhone = phone;
     let locked = isPhoneLocked;
-    let currentVerified = isVerified;
 
     if (!isPhoneLocked && tempPhone !== phone) {
       updatedPhone = tempPhone;
@@ -101,9 +93,10 @@ export default function Profile() {
       setIsPhoneLocked(true);
     }
 
+  // ПРОВЕРКА УСЛОВИЯ: Если промокод из Телеграма верный
     if (promoCode === "TG_SOUNDIFY_77") {
-      currentVerified = true;
       setIsVerified(true);
+      // Добавляем 24 часа (24 * 60 * 60 * 1000 миллисекунд) к текущему времени
       const duration24Hours = Date.now() + 24 * 60 * 60 * 1000;
       localStorage.setItem("profile_verified", "true");
       localStorage.setItem("profile_verified_expires", duration24Hours.toString());
@@ -117,35 +110,13 @@ export default function Profile() {
     localStorage.setItem("profile_phone", updatedPhone);
     localStorage.setItem("profile_phone_locked", locked ? "true" : "false");
 
-    // 🌐 МАРКАЗИЙ БАЗАГА ОДАТДА САҚЛАШ (UPSERT LOGIC)
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-        method: "POST",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          "Content-Type": "application/json",
-          "Prefer": "resolution=merge-duplicates" // Agar ID bo'lsa yangilaydi, yo'q bo'lsa yangi ochadi
-        },
-        body: JSON.stringify({
-          id: userId,
-          name: name,
-          surname: surname,
-          avatar: avatar,
-          is_verified: currentVerified,
-          updated_at: new Date().toISOString()
-        })
-      });
-    } catch (error) {
-      console.error("Ошибка сохранения в базу:", error);
-    }
-
     setPromoCode("");
     setIsEditing(false);
   };
 
   return (
     <div className="bg-gradient-to-b from-zinc-900 via-zinc-950 to-black h-screen text-white flex flex-col justify-between overflow-y-auto">
+      
       <header className="p-6 flex justify-between items-center bg-zinc-950/60 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-50">
         <Link href="/">
           <button className="text-zinc-400 hover:text-white flex items-center space-x-2 transition font-medium group">
@@ -160,6 +131,7 @@ export default function Profile() {
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 my-6">
         <div className="bg-zinc-900/40 p-8 rounded-3xl border border-zinc-800/80 max-w-md w-full shadow-2xl backdrop-blur-xl relative">
+          
           <button 
             onClick={() => {
               if (isEditing) setTempPhone(phone);
@@ -172,6 +144,7 @@ export default function Profile() {
 
           <div className="text-center mb-6 flex flex-col items-center relative z-10">
             <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+
             <div 
               onClick={() => fileInputRef.current?.click()}
               className="w-28 h-28 bg-zinc-800 rounded-full flex items-center justify-center shadow-xl border-4 border-zinc-900 overflow-hidden cursor-pointer relative group hover:border-green-500 transition duration-300"
@@ -182,6 +155,7 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* Динамический статус и таймер оставшегося времени */}
             {isVerified && (
               <div className="flex flex-col items-center mt-3 gap-1">
                 <span className="text-[11px] text-sky-400 font-bold bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20 tracking-wider">
@@ -192,11 +166,18 @@ export default function Profile() {
             )}
           </div>
 
+          {/* ПАНЕЛЬ УСЛОВИЙ TELEGRAM (Всегда видна для привлечения людей) */}
           {!isVerified && (
             <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-sky-950/40 to-zinc-900/60 border border-sky-900/40 text-center">
               <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">Получить синюю галочку 🌟</h4>
-              <p className="text-[11px] text-zinc-400 mb-3">Подпишитесь на наш official Telegram-канал и получите секретный промокод!</p>
-              <a href="https://t.me/PhonkSlowedSpeedup" target="_blank" rel="noopener noreferrer" className="inline-block bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-md shadow-sky-500/10">
+              <p className="text-[11px] text-zinc-400 mb-3">Подпишитесь на наш официальный Telegram-канал и получите секретный промокод!</p>
+              
+              <a 
+                href="https://t.me/PhonkSlowedSpeedup" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-md shadow-sky-500/10"
+              >
                 ✈️ Перейти в канал и получить код
               </a>
             </div>
@@ -236,10 +217,17 @@ export default function Profile() {
               )}
             </div>
 
+            {/* Поле ввода промокода (Показывается только при редактировании и отсутствии галочки) */}
             {isEditing && !isVerified && (
               <div className="pt-2 border-t border-zinc-800/60">
                 <label className="text-xs text-sky-400 uppercase font-bold tracking-wider block mb-1">Telegram Промокод 🔑</label>
-                <input type="text" placeholder="Введите код из канала..." value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="w-full bg-zinc-950 border border-sky-900/30 rounded-lg p-2.5 text-sm focus:outline-none focus:border-sky-500 text-sky-400 placeholder-zinc-700 font-mono uppercase" />
+                <input 
+                  type="text" 
+                  placeholder="Введите код из канала..." 
+                  value={promoCode} 
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  className="w-full bg-zinc-950 border border-sky-900/30 rounded-lg p-2.5 text-sm focus:outline-none focus:border-sky-500 text-sky-400 placeholder-zinc-700 font-mono uppercase"
+                />
               </div>
             )}
 
@@ -249,8 +237,10 @@ export default function Profile() {
               </button>
             )}
           </div>
+
         </div>
       </main>
+
       <footer className="h-14 bg-zinc-950 border-t border-zinc-800 px-6 flex items-center justify-center text-xs text-zinc-600">Soundify © 2026</footer>
     </div>
   );
