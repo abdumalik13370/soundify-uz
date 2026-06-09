@@ -47,6 +47,13 @@ const TRACKS_DATA = [
     src: "/musicxxx/raindance.mp3.mp3",
     cover: "⚡",
   },
+     {
+    id: 4,
+    title: "shamsiyev",
+    artist: "Rain Dance",
+    src: "/musicxxx/raindance.mp3.mp3",
+    cover: "⚡",
+  },
 ];
 
 
