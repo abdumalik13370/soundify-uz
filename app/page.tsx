@@ -3,70 +3,65 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
-// 1. Musiqalar ro'yxati (Namuna uchun bepul mp3 linklar)
+// TikTok trendidagi musiqalar ro'yxati
 const TRACKS_DATA = [
-  {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 1, 
+    title: "Phonk Drift (TikTok Remix)", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&w=300&q=80" 
   },
-   {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 2, 
+    title: "Aesthetic Slowed & Reverb", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=300&q=80" 
   },
-   {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 3, 
+    title: "Sad Vibe (Background Music)", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80" 
   },
-   {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 4, 
+    title: "Club Bass Boosted 2026", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80" 
   },
-   {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 5, 
+    title: "Speed Up Trend Sound", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80" 
   },
-   {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 6, 
+    title: "Lofi Beats for Mashup", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=300&q=80" 
   },
-     {
-    id: 4,
-    title: "shamsiyev",
-    artist: "Rain Dance",
-    src: "/musicxxx/raindance.mp3.mp3",
-    cover: "⚡",
+  { 
+    id: 7, 
+    title: "Viral Mashup Dance Mix", 
+    artist: "shamsiyev", 
+    src: "/musicxxx/raindance.mp3.mp3", 
+    cover: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=300&q=80" 
   },
 ];
 
-
-
-// ... O'zingizning TRACKS_DATA ro'yxatingiz (fayllar ruscha nomlangan bo'lsa o'zi o'tadi) ...
-
 export default function Home() {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   
-  // Состояния для громкости звука
   const [volume, setVolume] = useState(0.8); 
   const [prevVolume, setPrevVolume] = useState(0.8); 
   
@@ -74,7 +69,23 @@ export default function Home() {
   const [isVerified, setIsVerified] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const currentTrack = TRACKS_DATA[currentTrackIndex];
+  
+  const currentTrack = currentTrackIndex !== null ? TRACKS_DATA[currentTrackIndex] : null;
+
+  // 🟢 YANAGI QO'SHILGAN QISM: Telegramga xabar yuborish funksiyasi
+  const notifyDownload = async (trackTitle: string) => {
+    try {
+      await fetch("/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          message: `🎧 *Yangi yuklama!*\n\n🎵 *Musiqa:* ${trackTitle}\n👤 *Foydalanuvchi:* ${profileName}` 
+        }),
+      });
+    } catch (error) {
+      console.error("Xabar yuborishda xatolik:", error);
+    }
+  };
 
   useEffect(() => {
     const savedName = localStorage.getItem("profile_name");
@@ -96,7 +107,6 @@ export default function Home() {
     }
   }, []);
 
-  // Синхронизация громкости с элементом аудио
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
@@ -104,7 +114,7 @@ export default function Home() {
   }, [volume]);
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || currentTrackIndex === null) return;
     if (isPlaying) {
       audioRef.current.pause();
     } else {
@@ -119,7 +129,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (audioRef.current) {
+    if (audioRef.current && currentTrackIndex !== null) {
       audioRef.current.load();
       audioRef.current.volume = volume;
       if (isPlaying) {
@@ -129,11 +139,13 @@ export default function Home() {
   }, [currentTrackIndex]);
 
   const nextTrack = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % TRACKS_DATA.length);
+    if (currentTrackIndex === null) return;
+    setCurrentTrackIndex((prev) => (prev !== null ? (prev + 1) % TRACKS_DATA.length : 0));
   };
 
   const prevTrack = () => {
-    setCurrentTrackIndex((prev) => (prev - 1 + TRACKS_DATA.length) % TRACKS_DATA.length);
+    if (currentTrackIndex === null) return;
+    setCurrentTrackIndex((prev) => (prev !== null ? (prev - 1 + TRACKS_DATA.length) % TRACKS_DATA.length : 0));
   };
 
   const handleTimeUpdate = () => {
@@ -177,13 +189,13 @@ export default function Home() {
         {/* Sidebar */}
         <aside className="w-64 bg-zinc-950 p-6 hidden md:block border-r border-zinc-800">
           <div className="mb-8 select-none">
-            <h1 className="text-3xl font-black tracking-[0.2em] uppercase bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-              SOUNDIFY
+            <h1 className="text-3xl font-black tracking-[0.1em] uppercase bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(217,70,239,0.4)]">
+              TrendTik
             </h1>
           </div>
 
           <nav className="space-y-4">
-            <Link href="/" className="text-white cursor-pointer font-medium transition block bg-zinc-900 p-2 rounded-lg">🏠 Главная</Link>
+            <Link href="/" className="text-white cursor-pointer font-medium transition block bg-zinc-900 p-2 rounded-lg">🔥 Тренды</Link>
             <Link href="/profile" className="text-zinc-400 hover:text-white cursor-pointer font-medium transition block p-2 rounded-lg">👤 Профиль</Link>
           </nav>
         </aside>
@@ -193,7 +205,12 @@ export default function Home() {
           
           {/* Header Section */}
           <header className="flex justify-between items-center">
-            <h2 className="text-2xl md:text-3xl font-bold">Добро пожаловать!</h2>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                TikTok Тренды <span className="animate-pulse">🔥</span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">Самые популярные звуки, под которые снимают прямо сейчас</p>
+            </div>
             
             <Link href="/profile">
               <button className="bg-zinc-800 hover:bg-zinc-700 p-2 rounded-full text-sm font-semibold transition px-5 border border-zinc-700/80 flex items-center gap-2 max-w-[240px] shadow-md group">
@@ -210,9 +227,9 @@ export default function Home() {
           {/* Панель автора */}
           <div className="animate-fade-in">
             <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-md flex flex-col sm:flex-row items-center gap-5 max-w-2xl shadow-xl relative overflow-hidden group">
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-green-500/10 rounded-full blur-3xl group-hover:bg-green-500/20 transition-all duration-500"></div>
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-fuchsia-500/10 rounded-full blur-3xl group-hover:bg-fuchsia-500/20 transition-all duration-500"></div>
               
-              <div className="w-20 h-20 rounded-full border-2 border-zinc-700 overflow-hidden bg-zinc-800 flex-shrink-0 shadow-lg relative group-hover:border-green-400 transition-colors duration-300">
+              <div className="w-20 h-20 rounded-full border-2 border-zinc-700 overflow-hidden bg-zinc-800 flex-shrink-0 shadow-lg relative group-hover:border-fuchsia-400 transition-colors duration-300">
                 <img 
                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" 
                   alt="Автор" 
@@ -230,7 +247,7 @@ export default function Home() {
                   </div>
                   <span className="text-[10px] bg-zinc-800 text-zinc-400 font-medium px-2 py-0.5 rounded-full border border-zinc-700/50 w-max mx-auto sm:mx-0">20 лет</span>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-md">Я являюсь создателем проекта Soundify. Разработал эту платформу на основе передовых веб-технологий.</p>
+                <p className="text-xs text-zinc-400 leading-relaxed max-w-md">Я являюсь создателем проекта TrendTik. Разработал эту платформу на основе передовых веб-технологий.</p>
                 <div className="flex items-center justify-center sm:justify-start gap-2.5 pt-0.5">
                   <a href="https://t.me/Sizning_Telegramingiz" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-zinc-800/80 hover:bg-sky-600 hover:text-white text-zinc-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-md transition duration-300 border border-zinc-700/50"><span>✈️</span> Telegram</a>
                   <a href="https://instagram.com/Sizning_Instagramingiz" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 bg-zinc-800/80 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:text-white text-zinc-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-md transition duration-300 border border-zinc-700/50"><span>📸</span> Instagram</a>
@@ -242,8 +259,8 @@ export default function Home() {
           <hr className="border-zinc-800/40" />
 
           {/* СЕКЦИЯ ТРЕКОВ + КНОПКА СКАЧИВАНИЯ */}
-          <div className="pb-12">
-            <h3 className="text-lg font-bold mb-3.5 text-zinc-400">Рекомендуемые треки</h3>
+          <div className="pb-24">
+            <h3 className="text-lg font-bold mb-3.5 text-zinc-400">Популярно на этой неделе</h3>
             
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
               {TRACKS_DATA.map((track, index) => {
@@ -252,30 +269,37 @@ export default function Home() {
                   <div 
                     key={track.id} 
                     onClick={() => playTrack(index)} 
-                    className={`p-2.5 rounded-xl transition cursor-pointer group border backdrop-blur-md flex flex-col justify-between ${currentTrackIndex === index ? "bg-zinc-800/90 border-green-500/50 shadow-lg" : "bg-zinc-900/40 hover:bg-zinc-800/60 border-zinc-800/40"}`}
+                    className={`p-2.5 rounded-xl transition cursor-pointer group border backdrop-blur-md flex flex-col justify-between transform active:scale-95 ${currentTrackIndex === index ? "bg-zinc-800/90 border-fuchsia-500/50 shadow-lg" : "bg-zinc-900/40 hover:bg-zinc-800/60 border-zinc-800/40"}`}
                   >
-                    <div className="bg-zinc-800 w-full aspect-square rounded-lg mb-2 shadow-md overflow-hidden relative flex items-center justify-center text-3xl select-none">
-                      {track.cover}
+                    <div className="bg-zinc-800 w-full aspect-square rounded-lg mb-2 shadow-md overflow-hidden relative select-none">
+                      <img 
+                        src={track.cover} 
+                        alt={track.title} 
+                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                      />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                        <button className="bg-green-500 text-black p-2 rounded-full shadow-lg hover:scale-105 transition text-xs font-bold w-8 h-8 flex items-center justify-center">
+                        <button className="bg-fuchsia-500 text-white p-2 rounded-full shadow-lg hover:scale-105 transition text-xs font-bold w-8 h-8 flex items-center justify-center">
                           {isThisTrackPlaying ? "⏸" : "▶"}
                         </button>
                       </div>
                     </div>
                     
-                    {/* Название и кнопка скачивания */}
-                    <div className="flex items-center justify-between gap-1 px-0.5">
-                      <div className="truncate flex-1">
-                        <h3 className="text-xs sm:text-sm font-bold truncate text-zinc-200 group-hover:text-green-400 transition duration-200">{track.title}</h3>
-                        <p className="text-[10px] sm:text-xs text-zinc-500 truncate mt-0.5">{track.artist}</p>
+                    <div className="flex items-center justify-between gap-1 px-0.5 w-full mt-1">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xs sm:text-sm font-bold text-zinc-200 group-hover:text-fuchsia-400 transition duration-200 break-words whitespace-normal">
+                          {track.title}
+                        </h3>
+                        <p className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 break-words whitespace-normal">
+                          {track.artist}
+                        </p>
                       </div>
 
-                      {/* Кнопка скачивания */}
                       <a
                         href={track.src}
                         download={`${track.artist} - ${track.title}.mp3`}
                         onClick={(e) => {
-                          e.stopPropagation(); // Предотвращает запуск трека при клике на кнопку
+                          e.stopPropagation(); // 🟢 Kartani bosganda musiqa chalib ketmasligi uchun
+                          notifyDownload(track.title); // 🟢 Telegram botga signal ketadi
                         }}
                         className="w-7 h-7 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-md flex items-center justify-center text-xs border border-zinc-700/50 transition active:scale-95 flex-shrink-0"
                         title="Скачать"
@@ -293,52 +317,59 @@ export default function Home() {
       </div>
 
       {/* Player Bar */}
-      <footer className="h-24 bg-zinc-950 border-t border-zinc-800 px-4 flex items-center justify-between z-50">
-        <div className="flex items-center space-x-4 w-1/4">
-          <div className="w-14 h-14 bg-zinc-800 rounded flex items-center justify-center text-2xl shadow-md border border-zinc-700">{currentTrack?.cover}</div>
-          <div className="truncate">
-            <h4 className="text-sm font-medium truncate text-green-400">{currentTrack?.title}</h4>
-            <p className="text-xs text-zinc-400 truncate">{currentTrack?.artist}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center space-y-2 w-2/4">
-          <div className="flex items-center space-x-6 text-zinc-400">
-            <button onClick={prevTrack} className="hover:text-white transition text-lg">⏮</button>
-            <button onClick={togglePlay} className="bg-white text-black p-2 rounded-full hover:scale-105 transition text-lg w-10 h-10 flex items-center justify-center font-bold shadow-md">{isPlaying ? "⏸" : "▶"}</button>
-            <button onClick={nextTrack} className="hover:text-white transition text-lg">⏭</button>
-          </div>
-          
-          <div className="w-full max-w-md flex items-center space-x-2 text-xs text-zinc-500 font-mono">
-            <span>{Math.floor(currentTime / 60)}:{( "0" + Math.floor(currentTime % 60) ).slice(-2)}</span>
-            <div className="flex-1 bg-zinc-800 h-1 rounded-full overflow-hidden relative cursor-pointer">
-              <div className="bg-green-500 h-full transition-all duration-100" style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}></div>
+      {currentTrackIndex !== null && currentTrack && (
+        <footer className="h-24 bg-zinc-950 border-t border-zinc-800 px-4 flex items-center justify-between z-50 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center space-x-4 w-1/4">
+            <div className="w-14 h-14 bg-zinc-800 rounded overflow-hidden shadow-md border border-zinc-700 flex-shrink-0">
+              <img 
+                src={currentTrack.cover} 
+                alt={currentTrack.title} 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span>{Math.floor(duration / 60) || 0}:{( "0" + Math.floor(duration % 60 || 0) ).slice(-2)}</span>
+            <div className="truncate">
+              <h4 className="text-sm font-medium truncate text-fuchsia-400">{currentTrack.title}</h4>
+              <p className="text-xs text-zinc-400 truncate">{currentTrack.artist}</p>
+            </div>
           </div>
-        </div>
 
-        {/* Панель громкости */}
-        <div className="w-1/4 flex justify-end items-center space-x-3 text-zinc-400 select-none">
-          <button 
-            onClick={toggleMute} 
-            className="hover:text-white transition active:scale-95 text-base w-6 h-6 flex items-center justify-center"
-            title={volume === 0 ? "Включить звук" : "Выключить звук"}
-          >
-            {volume === 0 ? "🔇" : volume < 0.4 ? "🔈" : "🔊"}
-          </button>
-          
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            className="w-20 sm:w-24 h-1 bg-zinc-800 accent-green-500 rounded-full appearance-none cursor-pointer hover:accent-green-400 transition"
-          />
-        </div>
-      </footer>
+          <div className="flex flex-col items-center space-y-2 w-2/4">
+            <div className="flex items-center space-x-6 text-zinc-400">
+              <button onClick={prevTrack} className="hover:text-white transition text-lg">⏮</button>
+              <button onClick={togglePlay} className="bg-white text-black p-2 rounded-full hover:scale-105 transition text-lg w-10 h-10 flex items-center justify-center font-bold shadow-md">{isPlaying ? "⏸" : "▶"}</button>
+              <button onClick={nextTrack} className="hover:text-white transition text-lg">⏭</button>
+            </div>
+            
+            <div className="w-full max-w-md flex items-center space-x-2 text-xs text-zinc-500 font-mono">
+              <span>{Math.floor(currentTime / 60)}:{( "0" + Math.floor(currentTime % 60) ).slice(-2)}</span>
+              <div className="flex-1 bg-zinc-800 h-1 rounded-full overflow-hidden relative cursor-pointer">
+                <div className="bg-fuchsia-500 h-full transition-all duration-100" style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}></div>
+              </div>
+              <span>{Math.floor(duration / 60) || 0}:{( "0" + Math.floor(duration % 60 || 0) ).slice(-2)}</span>
+            </div>
+          </div>
+
+          <div className="w-1/4 flex justify-end items-center space-x-3 text-zinc-400 select-none">
+            <button 
+              onClick={toggleMute} 
+              className="hover:text-white transition active:scale-95 text-base w-6 h-6 flex items-center justify-center"
+              title={volume === 0 ? "Включить звук" : "Выключить звук"}
+            >
+              {volume === 0 ? "🔇" : volume < 0.4 ? "🔈" : "🔊"}
+            </button>
+            
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="w-20 sm:w-24 h-1 bg-zinc-800 accent-fuchsia-500 rounded-full appearance-none cursor-pointer hover:accent-fuchsia-400 transition"
+            />
+          </div>
+        </footer>
+      )}
 
     </div>
   );

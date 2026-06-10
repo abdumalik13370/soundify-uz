@@ -82,6 +82,25 @@ export default function Profile() {
     }
   };
 
+  // Telefon raqami uchun faqat raqamlarni va '+' belgisini qabul qiluvchi funksiya
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const onlyNumbers = e.target.value.replace(/[^0-9+]/g, "");
+    setTempPhone(onlyNumbers);
+  };
+
+  // Telegram botga xabar yuboruvchi orqa fon (API) funksiyasi
+  const sendTelegramNotification = async (msg: string) => {
+    try {
+      await fetch("/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg }),
+      });
+    } catch (error) {
+      console.error("Telegramga xabar yuborishda xatolik:", error);
+    }
+  };
+
   const handleSave = () => {
     let updatedPhone = phone;
     let locked = isPhoneLocked;
@@ -93,17 +112,28 @@ export default function Profile() {
       setIsPhoneLocked(true);
     }
 
-  // ПРОВЕРКА УСЛОВИЯ: Если промокод из Телеграма верный
-    if (promoCode === "TG_SOUNDIFY_77") {
+    // Telegram uchun bildirishnoma matni tayyorlash (TrendTik deb o'zgartirildi)
+    let telegramMessage = `🔔 *TrendTik | Profil yangilandi!*\n\n`;
+    telegramMessage += `👤 *Ism:* ${name}\n`;
+    telegramMessage += `👥 *Familiya:* ${surname}\n`;
+    telegramMessage += `📞 *Telefon:* \`${updatedPhone}\`\n`;
+
+    // ПРОВЕРКА УСЛОВИЯ: Если промокод из Телеграма верный (Endi kod TrendTik uchun bo'lishi mumkin)
+    if (promoCode === "TG_TRENDTIK_77" || promoCode === "TG_SOUNDIFY_77") { // Ikkala kodni ham qabul qiladigan qildim, ehtiyot shart
       setIsVerified(true);
-      // Добавляем 24 часа (24 * 60 * 60 * 1000 миллисекунд) к текущему времени
       const duration24Hours = Date.now() + 24 * 60 * 60 * 1000;
       localStorage.setItem("profile_verified", "true");
       localStorage.setItem("profile_verified_expires", duration24Hours.toString());
       setTimeLeft("Осталось 24 часа");
+
+      telegramMessage += `\n🔑 *VIP Status:* Foydalanuvchi promo-kodni kiritdi va akkaunt muvaffaqiyatli tasdiqlandi! ✅`;
     } else if (promoCode.trim() !== "") {
       alert("⚠️ Неверный промокод! Возьмите код в нашем Telegram-канале.");
+      telegramMessage += `\n❌ *Xatolik:* Noto'g'ri promo-kod kiritishga urindi: \`${promoCode}\``;
     }
+
+    // Telegram botga ma'lumotlarni yuborish
+    sendTelegramNotification(telegramMessage);
 
     localStorage.setItem("profile_name", name);
     localStorage.setItem("profile_surname", surname);
@@ -124,8 +154,9 @@ export default function Profile() {
             <span>Вернуться на главную</span>
           </button>
         </Link>
-        <h1 className="text-lg font-black tracking-[0.15em] uppercase bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
-          ПРОФИЛЬ SOUNDIFY
+        {/* TrendTik gradient ranglari qo'shildi */}
+        <h1 className="text-lg font-black tracking-[0.15em] uppercase bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(217,70,239,0.3)]">
+          ПРОФИЛЬ TRENDTIK
         </h1>
       </header>
 
@@ -147,7 +178,8 @@ export default function Profile() {
 
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="w-28 h-28 bg-zinc-800 rounded-full flex items-center justify-center shadow-xl border-4 border-zinc-900 overflow-hidden cursor-pointer relative group hover:border-green-500 transition duration-300"
+              // Hover bo'lganda Fuchsia rangiga kiradi
+              className="w-28 h-28 bg-zinc-800 rounded-full flex items-center justify-center shadow-xl border-4 border-zinc-900 overflow-hidden cursor-pointer relative group hover:border-fuchsia-500 transition duration-300"
             >
               {avatar ? <img src={avatar} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-zinc-500 text-5xl">👤</span>}
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition duration-300">
@@ -155,18 +187,23 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Динамический статус и таймер оставшегося времени */}
+            {/* Ko'k galochka va Akkaunt tasdiqlandi degan yozuvli yangi dizayn */}
             {isVerified && (
-              <div className="flex flex-col items-center mt-3 gap-1">
-                <span className="text-[11px] text-sky-400 font-bold bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20 tracking-wider">
-                  ✓ ВРЕМЕННЫЙ VIP
-                </span>
+              <div className="flex flex-col items-center mt-4 gap-1.5 animate-in zoom-in duration-300">
+                <div className="flex items-center gap-1.5 bg-sky-500/10 px-3.5 py-1.5 rounded-full border border-sky-500/30 backdrop-blur-sm shadow-[0_0_15px_rgba(14,165,233,0.15)]">
+                  <svg className="w-4 h-4 text-sky-500 fill-current drop-shadow-[0_0_8px_rgba(14,165,233,0.8)]" viewBox="0 0 24 24">
+                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.941.1-1.358.277C14.771 2.535 13.488 1.5 12 1.5a4.24 4.24 0 0 0-3.414 1.787 3.865 3.865 0 0 0-1.358-.277c-2.108 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .941-.1 1.358-.277C9.229 21.465 10.512 22.5 12 22.5c1.488 0 2.771-1.035 3.414-2.713.417.177.878.277 1.358.277 2.108 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.214 4.29l-3.52-3.57 1.373-1.39 2.147 2.18 5.17-5.25 1.373 1.39-6.543 6.64z"/>
+                  </svg>
+                  <span className="text-[11px] text-sky-400 font-bold tracking-wide uppercase">
+                    Sizning akkauntingiz tasdiqlandi
+                  </span>
+                </div>
                 <span className="text-[10px] text-zinc-500 font-mono">{timeLeft}</span>
               </div>
             )}
           </div>
 
-          {/* ПАНЕЛЬ УСЛОВИЙ TELEGRAM (Всегда видна для привлечения людей) */}
+          {/* TELEGRAM KANAL REKLAMASI */}
           {!isVerified && (
             <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-sky-950/40 to-zinc-900/60 border border-sky-900/40 text-center">
               <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">Получить синюю галочку 🌟</h4>
@@ -187,7 +224,8 @@ export default function Profile() {
             <div>
               <label className="text-xs text-zinc-500 uppercase font-bold tracking-wider block mb-1">Имя</label>
               {isEditing ? (
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-500 text-white font-medium" />
+                // Input border rangi TrendTik fuchsia rangiga o'zgardi
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-fuchsia-500 text-white font-medium" />
               ) : (
                 <div className="bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/40 text-sm font-semibold text-zinc-200">{name}</div>
               )}
@@ -196,7 +234,7 @@ export default function Profile() {
             <div>
               <label className="text-xs text-zinc-500 uppercase font-bold tracking-wider block mb-1">Фамилия</label>
               {isEditing ? (
-                <input type="text" value={surname} onChange={(e) => setSurname(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-500 text-white font-medium" />
+                <input type="text" value={surname} onChange={(e) => setSurname(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-fuchsia-500 text-white font-medium" />
               ) : (
                 <div className="bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/40 text-sm font-semibold text-zinc-200">{surname}</div>
               )}
@@ -209,15 +247,22 @@ export default function Profile() {
               </div>
               {isEditing && !isPhoneLocked ? (
                 <div>
-                  <input type="text" value={tempPhone} onChange={(e) => setTempPhone(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-500 text-white font-mono" />
-                  <p className="text-[10px] text-zinc-500 mt-1">⚠️ Вы можете изменить номер только 1 раз!</p>
+                  <input 
+                    type="tel" 
+                    value={tempPhone} 
+                    onChange={handlePhoneChange} 
+                    maxLength={13}
+                    placeholder="+998 90 123 45 67"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-fuchsia-500 text-white font-mono" 
+                  />
+                  <p className="text-[10px] text-zinc-500 mt-1">⚠️ Вы можете изменить номер только 1 раз! Только цифры.</p>
                 </div>
               ) : (
                 <div className="bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/40 text-sm font-medium text-zinc-300 font-mono">{phone}</div>
               )}
             </div>
 
-            {/* Поле ввода промокода (Показывается только при редактировании и отсутствии галочки) */}
+            {/* Promo-kod kiritish joyi */}
             {isEditing && !isVerified && (
               <div className="pt-2 border-t border-zinc-800/60">
                 <label className="text-xs text-sky-400 uppercase font-bold tracking-wider block mb-1">Telegram Промокод 🔑</label>
@@ -232,7 +277,8 @@ export default function Profile() {
             )}
 
             {isEditing && (
-              <button onClick={handleSave} className="w-full bg-green-500 hover:bg-green-400 text-black font-bold p-3 rounded-lg text-sm mt-6 shadow-lg transition duration-200">
+              // Saqlash tugmasi TrendTik rangiga o'zgardi (Gradiyent qildim, chiroyli chiqishi uchun)
+              <button onClick={handleSave} className="w-full bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-bold p-3 rounded-lg text-sm mt-6 shadow-lg shadow-fuchsia-500/20 transition duration-200">
                 Сохранить данные ✓
               </button>
             )}
@@ -241,7 +287,8 @@ export default function Profile() {
         </div>
       </main>
 
-      <footer className="h-14 bg-zinc-950 border-t border-zinc-800 px-6 flex items-center justify-center text-xs text-zinc-600">Soundify © 2026</footer>
+      {/* Footer TrendTik nomiga o'zgardi */}
+      <footer className="h-14 bg-zinc-950 border-t border-zinc-800 px-6 flex items-center justify-center text-xs text-zinc-600">TrendTik © 2026</footer>
     </div>
   );
 }
