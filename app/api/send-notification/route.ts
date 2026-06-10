@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const { message } = await request.json();
 
     // 🔴 O'ZINGIZNING MA'LUMOTLARINGIZNI YOZING
-    const BOT_TOKEN = "8752807288:AAHEr6wD9qMK7CdaBHTLNmhUcgQ0v7M1OZc";
+    const BOT_TOKEN = "";
     const CHAT_ID = "5729075567";
 
     const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
