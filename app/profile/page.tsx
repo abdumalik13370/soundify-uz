@@ -205,11 +205,11 @@ export default function Profile() {
           {/* Блок рекламы Telegram-канала */}
           {!isVerified && (
             <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-sky-950/40 to-zinc-900/60 border border-sky-900/40 text-center">
-              <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">Получить синюю галочку 🌟</h4>
+              <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">Получить синюю галочку </h4>
               <p className="text-[11px] text-zinc-400 mb-3">Подпишитесь на наш официальный Telegram-канал и получите секретный код!</p>
               
               <a 
-                href="https://t.me/trenddtik" 
+                href="https://t.me/+dQVBwFFhUIMxNDJi" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-block bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-md shadow-sky-500/10"
